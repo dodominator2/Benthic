@@ -1096,10 +1096,56 @@ document.getElementById('linkToRewards').addEventListener('click', (e) => {
 // ===== INITIAL RENDER =====
 renderHabits(); renderTaskChecklist(); renderXP(); syncProfile(); renderLeaderboard(); applyUserSettings();
 
-// ===== PWA SERVICE WORKER REGISTRATION =====
+// ===== PWA SERVICE WORKER REGISTRATION & UPDATE SYSTEM =====
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker registered', reg))
-        .catch(err => console.error('Service Worker registration failed', err));
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('Service Worker registered');
+
+            // Vérifie si une mise à jour est déjà prête en arrière-plan
+            if (reg.waiting) {
+                showUpdateUI(reg.waiting);
+            }
+
+            // Détecte si un nouveau SW arrive
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showUpdateUI(newWorker);
+                    }
+                });
+            });
+        }).catch(err => console.error('SW Registration Error', err));
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+        }
+    });
+}
+
+function showUpdateUI(worker) {
+    const overlay = document.getElementById('updateOverlay');
+    const fill = document.getElementById('updateProgressFill');
+    if (!overlay) return;
+
+    overlay.style.display = 'flex';
+    
+    // Simulation d'une progression de barre pour l'effet visuel
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 95) {
+            progress = 98;
+            clearInterval(interval);
+            // Signale au SW de prendre le contrôle
+            worker.postMessage('SKIP_WAITING');
+        }
+        if (fill) fill.style.width = progress + '%';
+    }, 200);
 }
 });

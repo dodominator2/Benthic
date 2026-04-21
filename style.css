@@ -1374,3 +1374,73 @@ body.has-custom-bg .glass-panel {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(5px);
 }
+
+/* UPDATE OVERLAY SYSTEM */
+.update-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #0F172A;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+}
+
+.update-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 400px;
+}
+
+.update-logo-container {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1rem;
+    perspective: 1000px;
+}
+
+.rotating-logo {
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+    animation: rotateLogo3D 3s infinite linear;
+}
+
+@keyframes rotateLogo3D {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+.update-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.update-content p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.update-progress-bar {
+    width: 250px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.update-progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 10px var(--accent-primary);
+    width: 0%;
+    transition: width 0.3s ease;
+}

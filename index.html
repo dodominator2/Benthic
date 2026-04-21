@@ -17,6 +17,18 @@
 <body>
 
     <!-- AUTH OVERLAY -->
+    <div id="updateOverlay" class="update-overlay" style="display: none;"> 
+        <div class="update-content"> 
+            <div class="update-logo-container"> 
+                <img src="icon-512.png" alt="Benthic Logo" class="rotating-logo"> 
+            </div> 
+            <h2>Mise à jour en cours...</h2> 
+            <p>Benthic se synchronise avec les dernières améliorations.</p> 
+            <div class="update-progress-bar"> 
+                <div id="updateProgressFill" class="update-progress-fill" style="width: 0%"></div> 
+            </div> 
+        </div> 
+    </div>
     <div id="welcomeOverlay" class="welcome-overlay">
         <!-- Loader during auth check -->
         <div id="authLoading" class="welcome-content">
