@@ -968,4 +968,11 @@ function displayLeaderboardRows(list) {
 
 // ===== INITIAL RENDER =====
 renderHabits(); renderTaskChecklist(); renderXP(); syncProfile(); renderLeaderboard();
+
+// ===== PWA SERVICE WORKER REGISTRATION =====
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registered', reg))
+        .catch(err => console.error('Service Worker registration failed', err));
+}
 });

@@ -1,0 +1,41 @@
+{
+  "name": "benthic",
+  "version": "1.0.0",
+  "description": "Benthic - Dive into focus",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "author": "Benthic",
+  "license": "MIT",
+  "build": {
+    "appId": "com.benthic.app",
+    "productName": "Benthic",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "app.js",
+      "main.js",
+      "manifest.json",
+      "sw.js",
+      "icon-192.png",
+      "icon-512.png"
+    ],
+    "mac": {
+      "icon": "icon-512.png",
+      "category": "public.app-category.productivity",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "icon": "icon-512.png",
+      "target": ["nsis", "zip"]
+    }
+  }
+}
