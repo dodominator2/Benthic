@@ -558,23 +558,43 @@ if(addManualTaskBtn) {
             const startStr = now.toISOString().slice(0, 16); // Local time simplified
             const endStr = new Date(now.getTime() + 60*60*1000).toISOString().slice(0, 16);
             
+            const newId = 'man-' + Date.now();
             const newEvent = {
-                id: 'man-' + Date.now(),
+                id: newId,
                 title: title,
                 start: startStr,
                 end: endStr,
-                subject: 'Manuel'
+                subject: 'Manuel',
+                backgroundColor: '#171717'
             };
             
             calendarEvents.push(newEvent);
-            save('events', calendarEvents);
-            renderTasks();
-            if (typeof renderCalendar === 'function') renderCalendar();
+            if (typeof calendar !== 'undefined' && calendar) calendar.addEvent(newEvent);
+            
+            tasks.push({ id: newId, title: title, subject: 'Manuel', completed: false, pomodoros: 0 });
+            
+            saveAll();
+            if (typeof renderTaskChecklist === 'function') renderTaskChecklist();
             manualTaskInput.value = '';
             addXP(5); // Small reward for planning
         }
     });
 }
+
+// Click on geminiStatus to disconnect
+if(geminiStatus) {
+    geminiStatus.addEventListener('click', () => {
+        if(getGeminiKey() && confirm("Voulez-vous vous déconnecter de l'IA (supprimer la clé API) ?")) {
+            localStorage.removeItem('df_gemini_api_key');
+            if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+                db.ref('users/' + firebase.auth().currentUser.uid + '/data/gemini_api_key').remove();
+            }
+            updateGeminiUI();
+        }
+    });
+    geminiStatus.style.cursor = 'pointer';
+}
+
 
 updateGeminiUI();
 
