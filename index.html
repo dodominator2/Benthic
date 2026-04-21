@@ -537,6 +537,45 @@
                 </div>
             </section>
 
+            <!-- RECOMPENSES (accessible via Niveaux) -->
+            <section id="view-rewards" class="view-section" style="display: none;">
+                <header class="header">
+                    <button class="btn-back section-link" data-target="view-levels"><i class="ph ph-arrow-left"></i> Retour aux niveaux</button>
+                    <h2>Mes Récompenses</h2>
+                    <p>Personnalisez votre environnement de travail en fonction de votre expérience.</p>
+                </header>
+
+                <div class="reward-explanation-box glass-panel">
+                    <div class="reb-icon"><i class="ph ph-info"></i></div>
+                    <div class="reb-text">
+                        <h3>Comment ça marche ?</h3>
+                        <p>Chaque fois que vous travaillez, vous gagnez de l'XP. Tous les 2 niveaux, de nouvelles personnalisations abyssales sont débloquées automatiquement. Cliquez sur une récompense débloquée pour l'appliquer instantanément.</p>
+                    </div>
+                </div>
+
+                <div class="rewards-tabs">
+                    <button class="reward-tab active" data-tab="wallpapers">Environnements</button>
+                    <button class="reward-tab" data-tab="pomo-skins">Horloges Pomodoro</button>
+                    <button class="reward-tab" data-tab="titles">Titres</button>
+                </div>
+
+                <div id="rewards-wallpapers" class="reward-grid">
+                    <!-- Injected by JS -->
+                </div>
+
+                <div id="rewards-pomo-skins" class="reward-grid" style="display:none;">
+                    <!-- Injected by JS -->
+                </div>
+
+                <div id="rewards-titles" class="reward-grid" style="display:none;">
+                    <!-- Injected by JS -->
+                </div>
+
+                <div id="rewards-future" class="rewards-future-panel glass-panel">
+                    <!-- Injected by JS (Prochainement) -->
+                </div>
+            </section>
+
         </main>
     </div>
 
