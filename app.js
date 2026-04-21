@@ -966,8 +966,135 @@ function displayLeaderboardRows(list) {
     });
 }
 
+// ===== REWARDS & SKINS SYSTEM =====
+const REWARDS_CONFIG = {
+    wallpapers: [
+        { id: 'default', name: 'Abysses Profonds', level: 1, url: 'none', color: '#0F172A' },
+        { id: 'bg1', name: 'Rayons Abyssaux', level: 3, url: 'backgrounds/bg_level_3.png', color: '#1e293b' },
+        { id: 'bg2', name: 'Bioluminescence', level: 5, url: 'backgrounds/bg_level_5.png', color: '#0f172a' },
+        { id: 'bg3', name: 'Cité Engloutie', level: 7, url: 'backgrounds/bg_level_7.png', color: '#1e293b' },
+        { id: 'bg4', name: 'Trône de Corail', level: 9, url: 'backgrounds/bg_level_9.png', color: '#0f172a' }
+    ],
+    pomoSkins: [
+        { id: 'default', name: 'Classique', level: 1, class: '' },
+        { id: 'neon', name: 'Néon Futuriste', level: 2, class: 'skin-neon' },
+        { id: 'minimal', name: 'Ultra Minimal', level: 4, class: 'skin-minimal' },
+        { id: 'abyssal', name: 'Signature Abyssale', level: 6, class: 'skin-abyssal' }
+    ],
+    titles: [
+        { id: 't1', name: 'Plongeur Novice', level: 1 },
+        { id: 't2', name: 'Éclaireur des Eaux', level: 5 },
+        { id: 't3', name: 'Maître des Abysses', level: 10 }
+    ]
+};
+
+let userSettings = load('userSettings', { wallpaper: 'default', pomoSkin: 'default' });
+
+function applyUserSettings() {
+    // Apply wallpaper
+    const wp = REWARDS_CONFIG.wallpapers.find(w => w.id === userSettings.wallpaper);
+    if (wp) {
+        if (wp.url !== 'none') {
+            document.body.style.backgroundImage = `url('${wp.url}')`;
+            document.body.classList.add('has-custom-bg');
+        } else {
+            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundColor = wp.color;
+            document.body.classList.remove('has-custom-bg');
+        }
+    }
+
+    // Apply Pomo Skin
+    const skin = REWARDS_CONFIG.pomoSkins.find(s => s.id === userSettings.pomoSkin);
+    const timerDisplay = document.getElementById('timerDisplay');
+    if (skin && timerDisplay) {
+        timerDisplay.className = 'timer-display ' + skin.class;
+    }
+}
+
+function renderRewards() {
+    const { level } = getLevelInfo(totalXP);
+    
+    // Wallpapers
+    const wpContainer = document.getElementById('rewards-wallpapers');
+    wpContainer.innerHTML = '';
+    REWARDS_CONFIG.wallpapers.forEach(wp => {
+        const isLocked = level < wp.level;
+        const isActive = userSettings.wallpaper === wp.id;
+        const card = document.createElement('div');
+        card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
+        card.innerHTML = `
+            ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
+            <div class="reward-preview" style="background-image: url('${wp.url}'); background-color: ${wp.color}">
+                ${isLocked ? '<i class="ph ph-lock"></i>' : ''}
+            </div>
+            <div class="reward-info">
+                <h4>${wp.name}</h4>
+                <p>${isLocked ? `Débloqué au Niv. ${wp.level}` : 'Débloqué'}</p>
+            </div>
+        `;
+        if (!isLocked) {
+            card.onclick = () => {
+                userSettings.wallpaper = wp.id;
+                save('userSettings', userSettings);
+                applyUserSettings();
+                renderRewards();
+            };
+        }
+        wpContainer.appendChild(card);
+    });
+
+    // Pomo Skins
+    const skinContainer = document.getElementById('rewards-pomo-skins');
+    skinContainer.innerHTML = '';
+    REWARDS_CONFIG.pomoSkins.forEach(skin => {
+        const isLocked = level < skin.level;
+        const isActive = userSettings.pomoSkin === skin.id;
+        const card = document.createElement('div');
+        card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
+        card.innerHTML = `
+            ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
+            <div class="reward-preview">
+                <span class="timer-display ${skin.class}" style="font-size: 1.5rem;">25:00</span>
+                ${isLocked ? '<i class="ph ph-lock" style="position:absolute"></i>' : ''}
+            </div>
+            <div class="reward-info">
+                <h4>${skin.name}</h4>
+                <p>${isLocked ? `Débloqué au Niv. ${skin.level}` : 'Débloqué'}</p>
+            </div>
+        `;
+        if (!isLocked) {
+            card.onclick = () => {
+                userSettings.pomoSkin = skin.id;
+                save('userSettings', userSettings);
+                applyUserSettings();
+                renderRewards();
+            };
+        }
+        skinContainer.appendChild(card);
+    });
+}
+
+// Reward Tabs Navigation
+document.querySelectorAll('.reward-tab').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.reward-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('rewards-wallpapers').style.display = tab === 'wallpapers' ? 'grid' : 'none';
+        document.getElementById('rewards-pomo-skins').style.display = tab === 'pomo-skins' ? 'grid' : 'none';
+        document.getElementById('rewards-titles').style.display = tab === 'titles' ? 'grid' : 'none';
+    });
+});
+
+document.getElementById('linkToRewards').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('view-rewards');
+    renderRewards();
+});
+
 // ===== INITIAL RENDER =====
-renderHabits(); renderTaskChecklist(); renderXP(); syncProfile(); renderLeaderboard();
+renderHabits(); renderTaskChecklist(); renderXP(); syncProfile(); renderLeaderboard(); applyUserSettings();
 
 // ===== PWA SERVICE WORKER REGISTRATION =====
 if ('serviceWorker' in navigator) {
