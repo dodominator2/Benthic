@@ -487,6 +487,10 @@ const aiSubmitText = document.getElementById('aiSubmitText');
 let proposedActions = [];
 
 // API Key Management
+const apiStatusDot = document.getElementById('apiStatusDot');
+const apiStatusText = document.getElementById('apiStatusText');
+const resetApiBtn = document.getElementById('resetApiBtn');
+
 function getGeminiKey() { return localStorage.getItem('df_gemini_api_key'); }
 function updateGeminiUI() {
     const key = getGeminiKey();
@@ -495,17 +499,78 @@ function updateGeminiUI() {
         geminiStatus.className = "gemini-status ready";
         geminiKeySetup.style.display = "none";
         aiChatInterface.style.display = "flex";
+        
+        // Sidebar status
+        if(apiStatusDot) apiStatusDot.classList.add('active');
+        if(apiStatusText) apiStatusText.textContent = "IA Active";
+        if(resetApiBtn) resetApiBtn.style.display = "flex";
     } else {
         geminiStatus.textContent = "Clé requise";
         geminiStatus.className = "gemini-status missing";
         geminiKeySetup.style.display = "block";
         aiChatInterface.style.display = "none";
+        
+        // Sidebar status
+        if(apiStatusDot) apiStatusDot.classList.remove('active');
+        if(apiStatusText) apiStatusText.textContent = "IA non configurée";
+        if(resetApiBtn) resetApiBtn.style.display = "none";
     }
 }
+
 document.getElementById('saveGeminiKeyBtn').addEventListener('click', () => {
     const val = document.getElementById('geminiKeyInput').value.trim();
-    if(val) { localStorage.setItem('df_gemini_api_key', val); updateGeminiUI(); }
+    if(val) { 
+        localStorage.setItem('df_gemini_api_key', val); 
+        // Also save to firebase if connected
+        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+            db.ref('users/' + firebase.auth().currentUser.uid + '/data/gemini_api_key').set(val);
+        }
+        updateGeminiUI(); 
+    }
 });
+
+if(resetApiBtn) {
+    resetApiBtn.addEventListener('click', () => {
+        if(confirm("Voulez-vous vraiment modifier ou supprimer la clé API actuelle ?")) {
+            localStorage.removeItem('df_gemini_api_key');
+            if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+                db.ref('users/' + firebase.auth().currentUser.uid + '/data/gemini_api_key').remove();
+            }
+            updateGeminiUI();
+        }
+    });
+}
+
+// Manual Task Addition
+const manualTaskInput = document.getElementById('manualTaskInput');
+const addManualTaskBtn = document.getElementById('addManualTaskBtn');
+
+if(addManualTaskBtn) {
+    addManualTaskBtn.addEventListener('click', () => {
+        const title = manualTaskInput.value.trim();
+        if(title) {
+            const now = new Date();
+            const startStr = now.toISOString().slice(0, 16); // Local time simplified
+            const endStr = new Date(now.getTime() + 60*60*1000).toISOString().slice(0, 16);
+            
+            const newEvent = {
+                id: 'man-' + Date.now(),
+                title: title,
+                start: startStr,
+                end: endStr,
+                subject: 'Manuel'
+            };
+            
+            calendarEvents.push(newEvent);
+            save('events', calendarEvents);
+            renderTasks();
+            if (typeof renderCalendar === 'function') renderCalendar();
+            manualTaskInput.value = '';
+            addXP(5); // Small reward for planning
+        }
+    });
+}
+
 updateGeminiUI();
 
 document.getElementById('aiSubmitBtn').addEventListener('click', async () => {
