@@ -969,17 +969,18 @@ function displayLeaderboardRows(list) {
 // ===== REWARDS & SKINS SYSTEM =====
 const REWARDS_CONFIG = {
     wallpapers: [
-        { id: 'default', name: 'Abysses Profonds', level: 1, url: 'none', color: '#0F172A' },
+        { id: 'default', name: 'Benthic Clair (Défaut)', level: 1, url: 'none', color: '#FAFAFA' },
         { id: 'bg1', name: 'Rayons Abyssaux', level: 3, url: 'backgrounds/bg_level_3.png', color: '#1e293b' },
         { id: 'bg2', name: 'Bioluminescence', level: 5, url: 'backgrounds/bg_level_5.png', color: '#0f172a' },
         { id: 'bg3', name: 'Cité Engloutie', level: 7, url: 'backgrounds/bg_level_7.png', color: '#1e293b' },
         { id: 'bg4', name: 'Trône de Corail', level: 9, url: 'backgrounds/bg_level_9.png', color: '#0f172a' }
     ],
     pomoSkins: [
-        { id: 'default', name: 'Classique', level: 1, class: '' },
-        { id: 'neon', name: 'Néon Futuriste', level: 2, class: 'skin-neon' },
-        { id: 'minimal', name: 'Ultra Minimal', level: 4, class: 'skin-minimal' },
-        { id: 'abyssal', name: 'Signature Abyssale', level: 6, class: 'skin-abyssal' }
+        { id: 'default', name: 'Digital (Défaut)', level: 1, class: '', icon: 'ph-timer' },
+        { id: 'neon', name: 'Néon Cyan', level: 2, class: 'skin-neon', icon: 'ph-lightning' },
+        { id: 'hourglass', name: 'Sablier Abyssal', level: 4, class: 'skin-abyssal', icon: 'ph-hourglass' },
+        { id: 'minimal', name: 'Zen Minimal', level: 6, class: 'skin-minimal', icon: 'ph-drop' },
+        { id: 'clock', name: 'Horloge Marine', level: 8, class: 'skin-clock', icon: 'ph-clock' }
     ],
     titles: [
         { id: 't1', name: 'Plongeur Novice', level: 1 },
@@ -994,13 +995,17 @@ function applyUserSettings() {
     // Apply wallpaper
     const wp = REWARDS_CONFIG.wallpapers.find(w => w.id === userSettings.wallpaper);
     if (wp) {
-        if (wp.url !== 'none') {
+        if (wp.id === 'default') {
+            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundColor = '#FAFAFA';
+            document.body.classList.remove('has-custom-bg');
+        } else if (wp.url !== 'none') {
             document.body.style.backgroundImage = `url('${wp.url}')`;
             document.body.classList.add('has-custom-bg');
         } else {
             document.body.style.backgroundImage = 'none';
             document.body.style.backgroundColor = wp.color;
-            document.body.classList.remove('has-custom-bg');
+            document.body.classList.add('has-custom-bg');
         }
     }
 
@@ -1055,8 +1060,8 @@ function renderRewards() {
         card.innerHTML = `
             ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
             <div class="reward-preview">
-                <span class="timer-display ${skin.class}" style="font-size: 1.5rem;">25:00</span>
-                ${isLocked ? '<i class="ph ph-lock" style="position:absolute"></i>' : ''}
+                <i class="ph ${skin.icon}" style="font-size: 3rem; color: ${isLocked ? '#9ca3af' : 'var(--accent-primary)'}"></i>
+                ${isLocked ? '<i class="ph ph-lock" style="position:absolute; font-size: 1.2rem; bottom: 10px; right: 10px;"></i>' : ''}
             </div>
             <div class="reward-info">
                 <h4>${skin.name}</h4>
@@ -1073,6 +1078,28 @@ function renderRewards() {
         }
         skinContainer.appendChild(card);
     });
+
+    // Progression / Prochainement
+    renderFutureRewards(level);
+}
+
+function renderFutureRewards(currentLevel) {
+    const futureContainer = document.getElementById('rewards-future');
+    if (!futureContainer) return;
+    
+    // Trouver la prochaine récompense de chaque type
+    const nextWp = REWARDS_CONFIG.wallpapers.find(w => w.level > currentLevel);
+    const nextSkin = REWARDS_CONFIG.pomoSkins.find(s => s.level > currentLevel);
+    
+    let html = '<h3>Prochaines étapes de votre voyage</h3><div class="future-rewards-row">';
+    if (nextWp) {
+        html += `<div class="future-item"><i class="ph ph-image"></i> <span>Niveau ${nextWp.level} : ${nextWp.name}</span></div>`;
+    }
+    if (nextSkin) {
+        html += `<div class="future-item"><i class="ph ph-timer"></i> <span>Niveau ${nextSkin.level} : Horloge ${nextSkin.name}</span></div>`;
+    }
+    html += '</div>';
+    futureContainer.innerHTML = html;
 }
 
 // Reward Tabs Navigation

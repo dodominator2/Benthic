@@ -1,4 +1,4 @@
-const CACHE_NAME = 'benthic-v1.1'; // Changement de version pour forcer la détection
+const CACHE_NAME = 'benthic-v1.2'; // Force Update
 const urlsToCache = [
   './',
   './index.html',
@@ -16,7 +16,7 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
-  self.skipWaiting(); // Force le nouveau SW à prendre le contrôle immédiatement
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
@@ -41,11 +41,9 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  // Reclame le contrôle immédiat de tous les clients
   self.clients.claim();
 });
 
-// Écoute le message pour forcer la mise à jour
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') {
     self.skipWaiting();

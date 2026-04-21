@@ -1444,3 +1444,77 @@ body.has-custom-bg .glass-panel {
     width: 0%;
     transition: width 0.3s ease;
 }
+
+/* REWARDS ENHANCEMENTS */
+.reward-explanation-box {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.02);
+    border-color: var(--panel-border);
+}
+
+.reb-icon i {
+    font-size: 2rem;
+    color: var(--accent-primary);
+}
+
+.reb-text h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.reb-text p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.rewards-future-panel {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: #F9FAFB;
+}
+
+.rewards-future-panel h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.future-rewards-row {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.future-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.future-item i {
+    color: var(--accent-primary);
+    opacity: 0.5;
+}
+
+/* POMODORO SKIN CLOCK */
+.timer-display.skin-clock {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    border: 4px double var(--accent-primary);
+    padding: 1rem 2rem;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 250px;
+    height: 250px;
+    margin: 0 auto;
+}
