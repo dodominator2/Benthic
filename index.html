@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benthic - Focus & Productivité</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/fr.global.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <!-- AUTH OVERLAY -->
+    <div id="welcomeOverlay" class="welcome-overlay">
+        <!-- Loader during auth check -->
+        <div id="authLoading" class="welcome-content">
+            <div class="spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Connexion en cours...</p>
+        </div>
+
+        <!-- Login / Register Form -->
+        <div id="authScreen" class="welcome-content" style="display:none;">
+            <h1 class="welcome-title">Benthic</h1>
+            <p class="slogan-welcome">Dive into focus</p>
+            <p class="welcome-subtitle" id="authSubtitle">Connectez-vous pour synchroniser vos données.</p>
+            
+            <div class="auth-form">
+                <input type="text" id="authNameInput" placeholder="Votre Pseudo (pour l'inscription)" style="display:none;" autocomplete="off">
+                <input type="email" id="authEmailInput" placeholder="Adresse e-mail" autocomplete="email">
+                <input type="password" id="authPassInput" placeholder="Mot de passe" autocomplete="current-password">
+                
+                <p id="authErrorMsg" class="auth-error"></p>
+                
+                <button id="authSubmitBtn" class="btn-primary w-100">Se connecter</button>
+            </div>
+            
+            <p class="auth-toggle">
+                <span id="authToggleText">Pas encore de compte ?</span>
+                <a href="#" id="authToggleLink">S'inscrire</a>
+            </p>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2rem;">Benthic © 2026</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar glass-panel">
+            <div class="logo">
+                <div class="signature-logo">B</div>
+                <div class="logo-text">
+                    <h1>Benthic</h1>
+                    <p class="slogan">Dive into focus</p>
+                </div>
+            </div>
+
+            <div class="xp-profile">
+                <div class="xp-user-row">
+                    <span class="xp-username" id="xpUsername">—</span>
+                    <span class="xp-level-badge" id="xpLevelBadge">Niv. 1</span>
+                </div>
+                <div class="xp-bar-row">
+                    <div class="xp-bar"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+                    <span class="xp-text" id="xpText">0 / 100</span>
+                </div>
+            </div>
+
+            <ul class="nav-links">
+                <li class="active" data-target="view-dashboard"><i class="ph ph-squares-four"></i> Dashboard</li>
+                <li data-target="view-habits"><i class="ph ph-heart"></i> Habitudes</li>
+                <li data-target="view-agenda"><i class="ph ph-calendar"></i> Agenda</li>
+                <li data-target="view-pomodoro"><i class="ph ph-timer"></i> Pomodoro</li>
+                <li data-target="view-productivity"><i class="ph ph-chart-line-up"></i> Productivité</li>
+                <li data-target="view-levels"><i class="ph ph-trend-up"></i> Niveaux</li>
+                <li data-target="view-leaderboard"><i class="ph ph-users"></i> Classement</li>
+            </ul>
+
+            <div class="spacer"></div>
+
+            <div class="vacation-planner">
+                <h3>Programme Vacances</h3>
+                <button id="generateVacationBtn" class="btn-primary w-100">
+                    <i class="ph ph-magic-wand"></i> Générer Planning
+                </button>
+            </div>
+            
+            <button id="btnLogout" class="btn-secondary w-100" style="margin-top: 1rem; border-color: transparent; background: transparent; color: var(--text-muted);">
+                <i class="ph ph-sign-out"></i> Se déconnecter
+            </button>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main-content">
+
+            <!-- DASHBOARD -->
+            <section id="view-dashboard" class="view-section active">
+                <header class="header">
+                    <h2>Tableau de Bord</h2>
+                    <p id="dashGreeting"></p>
+                </header>
+
+                <div class="dashboard-grid">
+                    <!-- AI Assistant -->
+                    <div class="dashboard-card glass-panel ai-card" style="grid-column: 1 / -1;">
+                        <div class="ai-header">
+                            <h2><i class="ph ph-sparkle"></i> Gemini AI Assistant</h2>
+                            <span id="geminiStatus" class="gemini-status missing">Clé API requise</span>
+                        </div>
+                        
+                        <!-- API Key Setup -->
+                        <div id="geminiKeySetup" class="gemini-key-setup">
+                            <p>Pour utiliser l'IA, veuillez entrer votre clé API Google Gemini.</p>
+                            <div class="key-input-group">
+                                <input type="password" id="geminiKeyInput" placeholder="sk-...">
+                                <button id="saveGeminiKeyBtn" class="btn-primary">Sauvegarder</button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Interface -->
+                        <div id="aiChatInterface" class="ai-assistant" style="display:none;">
+                            <textarea id="aiInput" rows="3" placeholder="Ex: Décale mon planning de lundi à mardi, ou ajoute 2h de maths..."></textarea>
+                            <button id="aiSubmitBtn" class="btn-primary">
+                                <i class="ph ph-paper-plane-tilt"></i> <span id="aiSubmitText">Demander à Gemini</span>
+                            </button>
+                            <!-- Spinner (hidden by default) -->
+                            <div id="aiSpinner" class="spinner" style="display:none;"></div>
+                        </div>
+                        
+                        <div id="aiProposal" class="ai-proposal" style="display:none;">
+                            <h3>Actions proposées par l'IA :</h3>
+                            <ul id="aiProposalList"></ul>
+                            <div class="ai-proposal-actions">
+                                <button id="aiAcceptBtn" class="btn-primary"><i class="ph ph-check"></i> Exécuter</button>
+                                <button id="aiRejectBtn" class="btn-secondary"><i class="ph ph-x"></i> Annuler</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Habits -->
+                    <div class="dashboard-card glass-panel">
+                        <a href="#" class="section-link" data-target="view-habits">Habitudes du jour</a>
+                        <div class="habit-list" id="habitList"></div>
+                        <div class="add-habit">
+                            <input type="text" id="newHabitInput" placeholder="Nouvelle habitude...">
+                            <button id="addHabitBtn"><i class="ph ph-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Tasks -->
+                    <div class="dashboard-card glass-panel">
+                        <h2>Tâches du Jour</h2>
+                        <div class="task-checklist" id="taskChecklist">
+                            <p class="empty-state">Aucune tâche. Utilisez l'assistant ci-dessus !</p>
+                        </div>
+                    </div>
+
+                    <!-- Productivity Link -->
+                    <div class="dashboard-card glass-panel flex-center">
+                        <a href="#" class="productivity-link" data-target="view-productivity">
+                            <i class="ph ph-trend-up"></i>
+                            <span>Productivité (semaine)</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HABITS HUB -->
+            <section id="view-habits" class="view-section">
+                <header class="header">
+                    <h2>Hub Habitudes</h2>
+                    <p>Suivez et développez vos habitudes quotidiennes.</p>
+                </header>
+
+                <div class="habits-hub-grid">
+                    <div class="glass-panel habit-chart-card">
+                        <h3>Régularité (fois complétées)</h3>
+                        <div class="chart-container">
+                            <canvas id="habitBarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="habit-bubbles-area">
+                        <h3>Mes Habitudes</h3>
+                        <div class="habit-bubbles" id="habitBubbles">
+                            <!-- Injected by JS -->
+                        </div>
+                        <div class="add-habit" style="margin-top:1.5rem;">
+                            <input type="text" id="newHabitInputHub" placeholder="Ajouter une habitude...">
+                            <button id="addHabitBtnHub"><i class="ph ph-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HABIT DETAIL (hidden sub-view) -->
+            <section id="view-habit-detail" class="view-section">
+                <header class="header">
+                    <button id="habitDetailBack" class="btn-back"><i class="ph ph-arrow-left"></i> Retour aux habitudes</button>
+                    <h2 id="habitDetailTitle">Lecture</h2>
+                    <p id="habitDetailSubtitle">Interface dédiée</p>
+                </header>
+
+                <!-- GENERIC HABIT DETAIL (for non-Lecture habits) -->
+                <div id="genericHabitDetail" class="habit-detail-content glass-panel">
+                    <div class="habit-detail-stats">
+                        <div class="stat-block">
+                            <span class="stat-number" id="detailTimesCompleted">0</span>
+                            <span class="stat-label">Fois complétée</span>
+                        </div>
+                        <div class="stat-block">
+                            <span class="stat-number" id="detailStreak">—</span>
+                            <span class="stat-label">Statut aujourd'hui</span>
+                        </div>
+                    </div>
+                    <div class="habit-detail-notes">
+                        <h3>Notes & Objectifs</h3>
+                        <textarea id="habitDetailNotes" rows="6" placeholder="Écrivez vos objectifs, notes personnelles..."></textarea>
+                        <button id="saveHabitNotes" class="btn-primary" style="margin-top:1rem;"><i class="ph ph-floppy-disk"></i> Sauvegarder</button>
+                    </div>
+                </div>
+
+                <!-- READING TRACKER (Notion-style, only for "Lecture") -->
+                <div id="readingTracker" style="display:none;">
+                    <div class="rt-toolbar">
+                        <div class="rt-filters">
+                            <button class="rt-filter active" data-rt-filter="all">📚 Tous les livres</button>
+                            <button class="rt-filter" data-rt-filter="en-cours">📖 En cours</button>
+                            <button class="rt-filter" data-rt-filter="lu">✅ Terminés</button>
+                            <button class="rt-filter" data-rt-filter="pas-lu">⏳ Pas lu</button>
+                        </div>
+                        <button id="addBookBtn" class="btn-primary"><i class="ph ph-plus"></i> Nouveau</button>
+                    </div>
+
+                    <!-- Add Book Modal -->
+                    <div id="addBookModal" class="rt-modal" style="display:none;">
+                        <div class="rt-modal-content glass-panel">
+                            <h3>Ajouter un livre</h3>
+                            <div class="rt-form">
+                                <input type="text" id="bookTitle" placeholder="Titre">
+                                <input type="text" id="bookAuthor" placeholder="Auteur">
+                                <select id="bookType">
+                                    <option value="Littérature classique">Littérature classique</option>
+                                    <option value="Philosophie">Philosophie</option>
+                                    <option value="Science Fiction">Science Fiction</option>
+                                    <option value="Économie">Économie</option>
+                                    <option value="Histoire">Histoire</option>
+                                    <option value="Développement personnel">Développement personnel</option>
+                                    <option value="Autre">Autre</option>
+                                </select>
+                                <input type="number" id="bookTotalPages" placeholder="Nombre total de pages" min="1">
+                                <div class="rt-form-actions">
+                                    <button id="saveBookBtn" class="btn-primary">Ajouter</button>
+                                    <button id="cancelBookBtn" class="btn-secondary">Annuler</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reading Table -->
+                    <div class="rt-table-wrapper glass-panel">
+                        <table class="rt-table">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Auteur</th>
+                                    <th>État</th>
+                                    <th>Type</th>
+                                    <th>Note</th>
+                                    <th>Progression</th>
+                                    <th>Pages</th>
+                                    <th>Date de fin</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="readingTableBody">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AGENDA -->
+            <section id="view-agenda" class="view-section">
+                <header class="header">
+                    <h2>Agenda & Emploi du Temps</h2>
+                    <p>Gérez vos blocs de travail.</p>
+                </header>
+                <div class="calendar-container glass-panel">
+                    <div id="calendar"></div>
+                </div>
+            </section>
+
+            <!-- POMODORO -->
+            <section id="view-pomodoro" class="view-section">
+                <header class="header">
+                    <h2>Session Deep Work</h2>
+                    <p>Liez une tâche et concentrez-vous.</p>
+                </header>
+                <div class="pomodoro-container glass-panel">
+                    <div class="pomodoro-settings">
+                        <div class="pomodoro-task-select">
+                            <label>Tâche en cours :</label>
+                            <select id="pomodoroTask"><option value="">Sélectionnez une tâche...</option></select>
+                        </div>
+                        <div class="pomodoro-duration-select">
+                            <label>Durée :</label>
+                            <select id="pomodoroDuration">
+                                <option value="25">25 minutes</option>
+                                <option value="55" selected>55 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="pomodoroPhase" class="pomodoro-phase">TRAVAIL</div>
+                    <div class="timer-display" id="timerDisplay">55:00</div>
+                    <div class="timer-controls">
+                        <button id="btnStart" class="btn-primary"><i class="ph ph-play"></i> Démarrer</button>
+                        <button id="btnPause" class="btn-secondary"><i class="ph ph-pause"></i> Pause</button>
+                        <button id="btnReset" class="btn-secondary"><i class="ph ph-stop"></i> Réinitialiser</button>
+                    </div>
+                    <div class="pomodoro-progress">
+                        Pomodoros complétés : <span id="pomoCount">0</span>
+                    </div>
+                    <button id="btnCompleteTask" class="btn-success" style="display:none;">
+                        <i class="ph ph-check-circle"></i> Marquer terminée
+                    </button>
+                </div>
+            </section>
+
+            <!-- PRODUCTIVITE -->
+            <section id="view-productivity" class="view-section">
+                <header class="header">
+                    <h2>Statistiques & Bilans</h2>
+                    <p>Analysez votre efficacité.</p>
+                </header>
+                <div class="filter-controls">
+                    <button class="filter-btn active" data-filter="day">Jour</button>
+                    <button class="filter-btn" data-filter="week">Semaine</button>
+                    <button class="filter-btn" data-filter="month">Mois</button>
+                    <button class="filter-btn" data-filter="year">Année</button>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card glass-panel">
+                        <h3>Tâches accomplies</h3>
+                        <div class="chart-container"><canvas id="timeChart"></canvas></div>
+                    </div>
+                    <div class="chart-card glass-panel">
+                        <h3>Taux d'accomplissement</h3>
+                        <div class="chart-container"><canvas id="ratioChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="stats-lower-grid">
+                    <div class="pomodoro-stats glass-panel">
+                        <h3>Bilan Pomodoros</h3>
+                        <div class="pomo-stats-content" id="pomoStatsContent">
+                            <p class="empty-state">Aucun Pomodoro terminé.</p>
+                        </div>
+                    </div>
+                    <div class="habit-stats glass-panel">
+                        <h3>Habitudes aujourd'hui</h3>
+                        <div class="habit-stats-content" id="habitStatsContent"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NIVEAUX (GAMIFICATION) -->
+            <section id="view-levels" class="view-section">
+                <header class="header">
+                    <h2>Système de Niveaux</h2>
+                    <p>Découvrez comment fonctionne votre progression.</p>
+                </header>
+                
+                <div class="levels-container">
+                    <div class="level-status-card glass-panel">
+                        <div class="ls-left">
+                            <h3 id="lvlPageCurrentLvl">Niv. 1</h3>
+                            <p class="ls-xp-text" id="lvlPageXpText">0 / 100 XP</p>
+                        </div>
+                        <div class="ls-right">
+                            <div class="ls-bar-bg">
+                                <div class="ls-bar-fill" id="lvlPageBarFill" style="width:0%"></div>
+                            </div>
+                            <p>Progression vers le prochain niveau</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Motivation Sociale -->
+                    <div class="social-motivation-card glass-panel">
+                        <div class="sm-content">
+                            <h3><i class="ph ph-fire"></i> Pourquoi gagner de l'XP ?</h3>
+                            <p>Les points d'expérience ne sont pas qu'un chiffre. Ils sont la preuve de votre régularité et de vos efforts. Dans <strong>Deep flow</strong>, l'XP sert à vous démarquer par rapport à vos amis. Voyez qui a été le plus productif cette semaine et laissez la saine compétition booster votre motivation à travailler !</p>
+                        </div>
+                        <button class="btn-primary btn-large" onclick="switchView('view-leaderboard')">
+                            <i class="ph ph-trophy"></i> Voir le classement
+                        </button>
+                    </div>
+
+                    <div class="level-info-grid">
+                        <div class="glass-panel info-panel">
+                            <h3><i class="ph ph-star"></i> Comment gagner de l'XP ?</h3>
+                            <ul class="xp-rules-list">
+                                <li>
+                                    <span class="xp-action">Session Pomodoro (55 min)</span>
+                                    <span class="xp-reward">+46 XP</span>
+                                </li>
+                                <li>
+                                    <span class="xp-action">Tâche cochée terminée</span>
+                                    <span class="xp-reward">+20 XP</span>
+                                </li>
+                                <li>
+                                    <span class="xp-action">Habitude cochée</span>
+                                    <span class="xp-reward">+10 XP</span>
+                                </li>
+                            </ul>
+                            <p class="xp-info-note">L'XP gagné via Pomodoro est proportionnel au temps passé (50 XP pour 1 heure).</p>
+                        </div>
+
+                        <div class="glass-panel info-panel">
+                            <h3><i class="ph ph-stairs"></i> Paliers de difficulté</h3>
+                            <p>Plus vous montez en niveau, plus il faut d'XP pour passer au niveau supérieur.</p>
+                            <div class="tier-list-wrapper">
+                                <table class="tier-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Niveaux</th>
+                                            <th>XP requis par niveau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>1 à 5</td><td>100 XP</td></tr>
+                                        <tr><td>6 à 10</td><td>150 XP</td></tr>
+                                        <tr><td>11 à 15</td><td>200 XP</td></tr>
+                                        <tr><td>16 à 20</td><td>300 XP</td></tr>
+                                        <tr><td>21 à 25</td><td>400 XP</td></tr>
+                                        <tr><td>26 à 30</td><td>500 XP</td></tr>
+                                        <tr><td>...</td><td>Croissant</td></tr>
+                                        <tr><td>96 à 100 (Max)</td><td>6 000 XP</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLASSEMENT ET AMIS -->
+            <section id="view-leaderboard" class="view-section">
+                <header class="header">
+                    <h2>Réseau & Classement</h2>
+                    <p>Comparez votre productivité avec vos amis et le monde.</p>
+                </header>
+
+                <div class="leaderboard-container">
+                    <!-- Top Section: Mon Profil & Ajout Ami -->
+                    <div class="lb-top-grid">
+                        <div class="lb-profile glass-panel">
+                            <h3>Mon Profil Social</h3>
+                            <div class="lb-profile-details">
+                                <div class="lb-avatar"><i class="ph ph-user"></i></div>
+                                <div>
+                                    <h4 id="lbMyName">—</h4>
+                                    <p id="lbMyLevel" class="lb-level">Niv. 1</p>
+                                </div>
+                            </div>
+                            <div class="lb-id-box">
+                                <span>Mon ID :</span>
+                                <code id="lbMyId">DF-XXXX</code>
+                                <button id="btnCopyId" class="btn-icon" title="Copier l'ID"><i class="ph ph-copy"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="lb-add-friend glass-panel">
+                            <h3>Ajouter un ami</h3>
+                            <p>Entrez l'ID d'un ami pour voir son avancement.</p>
+                            <div class="lb-add-input-group">
+                                <input type="text" id="friendIdInput" placeholder="Ex: DF-A1B2C3">
+                                <button id="btnAddFriend" class="btn-primary">Ajouter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Section: Tableaux -->
+                    <div class="lb-board glass-panel">
+                        <div class="lb-tabs">
+                            <button class="lb-tab active" data-tab="friends">Classement Amis</button>
+                            <button class="lb-tab" data-tab="global">Classement Global</button>
+                        </div>
+                        <div class="lb-table-wrapper">
+                            <table class="lb-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rang</th>
+                                        <th>Utilisateur</th>
+                                        <th>Niveau</th>
+                                        <th>XP Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardBody">
+                                    <!-- Injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- LEVEL UP OVERLAY -->
+    <div id="levelUpOverlay" class="level-up-overlay" style="display: none;">
+        <div class="level-up-content">
+            <h2 class="level-up-title">NIVEAU SUPÉRIEUR !</h2>
+            <div class="level-up-numbers">
+                <span id="levelOld">1</span>
+                <i class="ph ph-arrow-right"></i>
+                <span id="levelNew">2</span>
+            </div>
+            <p class="level-up-message">Impressionnant ! Continuez comme ça.</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyACQh_mY9PrEFT_Qa0Wj-ouLFIFVhBts4Q",
+        authDomain: "deep-flow-fadac.firebaseapp.com",
+        databaseURL: "https://deep-flow-fadac-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "deep-flow-fadac",
+        storageBucket: "deep-flow-fadac.firebasestorage.app",
+        messagingSenderId: "315852012007",
+        appId: "1:315852012007:web:22e2c4395ac07d33182542",
+        measurementId: "G-J5JMVMJ34C"
+      };
+      // Initialisation globale
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+    </script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
