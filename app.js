@@ -271,7 +271,12 @@ function switchView(targetId) {
 }
 navLinks.forEach(l => l.addEventListener('click', e => switchView(e.currentTarget.getAttribute('data-target'))));
 document.querySelector('.productivity-link').addEventListener('click', e => { e.preventDefault(); switchView('view-productivity'); });
-document.querySelector('.section-link[data-target="view-habits"]').addEventListener('click', e => { e.preventDefault(); switchView('view-habits'); });
+document.querySelectorAll('.section-link').forEach(btn => {
+    btn.addEventListener('click', e => { 
+        e.preventDefault(); 
+        switchView(e.currentTarget.getAttribute('data-target')); 
+    });
+});
 
 // ===== HABITS =====
 function renderHabits() {
