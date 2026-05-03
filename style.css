@@ -26,6 +26,11 @@ body {
     display: flex;
     justify-content: center;
     overflow-x: hidden;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    transition: background 0.8s ease-in-out, background-color 0.8s ease-in-out;
 }
 
 /* ============================================
@@ -1357,22 +1362,26 @@ button {
     letter-spacing: -5px;
 }
 
-/* DYNAMIC BODY BG */
-body {
-    background-size: cover;
-    background-position: center;
+/* DYNAMIC BODY BG (already partially in body) */
+body.has-custom-bg {
     background-attachment: fixed;
-    transition: background 1s ease-in-out;
 }
 
 body.has-custom-bg .app-container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 body.has-custom-bg .glass-panel {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+body.has-custom-bg .sidebar {
+    background: rgba(255, 255, 255, 0.4);
 }
 
 /* UPDATE OVERLAY SYSTEM */

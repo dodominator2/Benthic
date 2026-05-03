@@ -23,14 +23,28 @@ if (!myUserId) {
 }
 
 // Daily Reset Logic
-const todayStr = new Date().toISOString().split('T')[0];
-const lastLogin = localStorage.getItem('df_lastLoginDate');
-if (lastLogin !== todayStr) {
-    // Reset habits for the new day
-    habits.forEach(h => { h.completed = false; });
-    save('habits', habits);
-    localStorage.setItem('df_lastLoginDate', todayStr);
+function performDailyReset() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastLogin = localStorage.getItem('df_lastLoginDate');
+    
+    if (lastLogin !== todayStr) {
+        console.log("Nouveau jour détecté. Réinitialisation des données quotidiennes...");
+        
+        // Reset habits for the new day
+        habits.forEach(h => { h.completed = false; });
+        
+        // Remove completed tasks (they "disappear" the next day)
+        tasks = tasks.filter(t => !t.completed);
+        
+        localStorage.setItem('df_lastLoginDate', todayStr);
+        saveAll();
+        return true;
+    }
+    return false;
 }
+
+// Perform initial reset
+performDailyReset();
 
 function saveAll() { save('habits', habits); save('tasks', tasks); save('events', calendarEvents); save('habitNotes', habitNotes); save('friends', friends); }
 
@@ -227,6 +241,7 @@ firebase.auth().onAuthStateChanged((user) => {
             }
             
             // Re-render everything with loaded data
+            performDailyReset(); // Check if cloud data needs reset (e.g. from previous day)
             renderHabits();
             renderTaskChecklist();
             renderXP();
@@ -464,11 +479,27 @@ function renderTaskChecklist() {
     if(!tasks.length) { el.innerHTML = '<p class="empty-state">Aucune tâche. Utilisez l\'assistant ci-dessus !</p>'; return; }
     tasks.forEach(t => {
         const d = document.createElement('div');
-        d.className = `task-check-item disabled-task ${t.completed ? 'completed' : ''}`;
+        d.className = `task-check-item ${t.completed ? 'completed' : ''}`;
         d.innerHTML = `<div class="checkbox" data-id="${t.id}"></div><span>${t.title}</span><span class="task-subject">${t.subject||'Général'}</span>`;
         el.appendChild(d);
     });
-    // Manual checking is disabled. Tasks are completed automatically by Pomodoro.
+
+    // Manual checking
+    el.querySelectorAll('.checkbox').forEach(b => b.addEventListener('click', e => {
+        const t = tasks.find(x => x.id == e.target.dataset.id);
+        if(t && !t.completed) {
+            t.completed = true;
+            addXP(20);
+            saveAll();
+            renderTaskChecklist();
+            updatePomodoroSelect();
+            // Color calendar event if it exists
+            if (typeof calendar !== 'undefined') {
+                const ev = calendar.getEventById(t.id);
+                if(ev) ev.setProp('backgroundColor','#10B981');
+            }
+        }
+    }));
 }
 
 // ===== FULLCALENDAR =====
@@ -999,13 +1030,15 @@ function applyUserSettings() {
             document.body.style.backgroundImage = 'none';
             document.body.style.backgroundColor = '#FAFAFA';
             document.body.classList.remove('has-custom-bg');
-        } else if (wp.url !== 'none') {
-            document.body.style.backgroundImage = `url('${wp.url}')`;
-            document.body.classList.add('has-custom-bg');
         } else {
-            document.body.style.backgroundImage = 'none';
-            document.body.style.backgroundColor = wp.color;
             document.body.classList.add('has-custom-bg');
+            if (wp.url && wp.url !== 'none') {
+                document.body.style.backgroundImage = `url('${wp.url}')`;
+                document.body.style.backgroundColor = wp.color || 'transparent';
+            } else {
+                document.body.style.backgroundImage = 'none';
+                document.body.style.backgroundColor = wp.color || '#0f172a';
+            }
         }
     }
 
