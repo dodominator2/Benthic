@@ -1,4 +1,4 @@
-const CACHE_NAME = 'benthic-v1.7'; // Force Update
+const CACHE_NAME = 'benthic-v1.8'; // Force Update
 const urlsToCache = [
   './',
   './index.html',

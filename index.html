@@ -588,6 +588,17 @@
                     <!-- Injected by JS -->
                 </div>
 
+                <div id="minigame-section" class="minigame-banner" style="display: none;">
+                    <div class="mg-info">
+                        <h3><i class="ph ph-game-controller"></i> Zone de Détente - Abyssal Diver</h3>
+                        <p>Plongez dans les abysses ! 1 session = 5 minutes de jeu (coût : 1 Pomodoro terminé).</p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 1rem;">
+                        <span class="mg-credits">Crédits : <span id="gameCreditsDisplay">0</span></span>
+                        <button id="btnLaunchMinigame" class="btn-primary" style="background:#4338CA;"><i class="ph ph-play"></i> Jouer (5 min)</button>
+                    </div>
+                </div>
+
                 <div id="rewards-future" class="rewards-future-panel glass-panel">
                     <!-- Injected by JS (Prochainement) -->
                 </div>
@@ -606,6 +617,27 @@
                 <span id="levelNew">2</span>
             </div>
             <p class="level-up-message">Impressionnant ! Continuez comme ça.</p>
+        </div>
+    </div>
+
+    <!-- MINI-GAME MODAL -->
+    <div id="minigameModal" class="minigame-modal" style="display: none;">
+        <button id="btnCloseMinigame" class="mg-close-btn"><i class="ph ph-x"></i></button>
+        <div class="mg-header">
+            <div>Score: <span id="mgScore">0</span></div>
+            <div class="mg-timer" id="mgTimerDisplay">05:00</div>
+            <div>Best: <span id="mgBestScore">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div id="mgStartOverlay" class="mg-overlay">
+            <h2>Abyssal Diver</h2>
+            <p>Appuyez sur ESPACE ou CLIQUEZ pour faire nager votre sous-marin.<br>Évitez les mines abyssales !</p>
+            <button id="mgStartBtn" class="btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem;">Commencer l'exploration</button>
+        </div>
+        <div id="mgGameOverOverlay" class="mg-overlay" style="display:none;">
+            <h2 style="color:#EF4444;">Collision !</h2>
+            <p>Score final : <span id="mgFinalScore">0</span></p>
+            <button id="mgRestartBtn" class="btn-primary">Rejouer</button>
         </div>
     </div>
 

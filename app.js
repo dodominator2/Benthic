@@ -826,6 +826,10 @@ function endPomodoro() {
         const xpEarned = Math.round(durationMins * (50/60));
         addXP(xpEarned);
         
+        // Add minigame credit
+        userSettings.gameCredits = (userSettings.gameCredits || 0) + 1;
+        save('userSettings', userSettings);
+        
         saveAll();
         renderTaskChecklist();
         updatePomodoroSelect();
@@ -1101,7 +1105,7 @@ const REWARDS_CONFIG = {
     ]
 };
 
-let userSettings = load('userSettings', { wallpaper: 'default', pomoSkin: 'default', font: 'default', color: 'default' });
+let userSettings = load('userSettings', { wallpaper: 'default', pomoSkin: 'default', font: 'default', color: 'default', gameCredits: 0 });
 
 function applyUserSettings() {
     // Apply wallpaper
@@ -1271,6 +1275,29 @@ function renderRewards() {
         });
     }
 
+    // Minigame access
+    const minigameSection = document.getElementById('minigame-section');
+    if (minigameSection) {
+        if (level >= 10) {
+            minigameSection.style.display = 'flex';
+            const creditsDisp = document.getElementById('gameCreditsDisplay');
+            if(creditsDisp) creditsDisp.textContent = userSettings.gameCredits || 0;
+            
+            const btnLaunch = document.getElementById('btnLaunchMinigame');
+            if (userSettings.gameCredits > 0) {
+                btnLaunch.disabled = false;
+                btnLaunch.style.opacity = '1';
+                btnLaunch.onclick = () => launchMinigame();
+            } else {
+                btnLaunch.disabled = true;
+                btnLaunch.style.opacity = '0.5';
+                btnLaunch.onclick = null;
+            }
+        } else {
+            minigameSection.style.display = 'none';
+        }
+    }
+
     // Progression / Prochainement
     renderFutureRewards(level);
 }
@@ -1357,24 +1384,220 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-function showUpdateUI(worker) {
-    const overlay = document.getElementById('updateOverlay');
-    const fill = document.getElementById('updateProgressFill');
-    if (!overlay) return;
-
-    overlay.style.display = 'flex';
-    
-    // Simulation d'une progression de barre pour l'effet visuel
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress > 95) {
-            progress = 98;
-            clearInterval(interval);
-            // Signale au SW de prendre le contrôle
-            worker.postMessage('SKIP_WAITING');
-        }
-        if (fill) fill.style.width = progress + '%';
-    }, 200);
 }
+
+// ============================================
+// ABYSSAL DIVER MINI-GAME LOGIC
+// ============================================
+let mgAnimationId;
+let mgGameTimerInterval;
+let mgTimeLeft = 300; // 5 minutes (300 seconds)
+let mgScore = 0;
+let mgIsPlaying = false;
+let mgSubmarine;
+let mgObstacles = [];
+let mgFrameCount = 0;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
+
+function launchMinigame() {
+    if (!userSettings.gameCredits || userSettings.gameCredits <= 0) return;
+    
+    // Consume credit
+    userSettings.gameCredits--;
+    save('userSettings', userSettings);
+    renderRewards(); // update UI
+    
+    document.getElementById('minigameModal').style.display = 'flex';
+    document.getElementById('mgStartOverlay').style.display = 'block';
+    document.getElementById('mgGameOverOverlay').style.display = 'none';
+    
+    // Reset Game State
+    mgTimeLeft = 300;
+    mgScore = 0;
+    updateMgTimerDisplay();
+    document.getElementById('mgScore').textContent = '0';
+    document.getElementById('mgBestScore').textContent = userSettings.mgBestScore || 0;
+    
+    // Draw initial background
+    if(ctx) {
+        ctx.fillStyle = '#0F172A';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+document.getElementById('btnCloseMinigame').addEventListener('click', () => {
+    document.getElementById('minigameModal').style.display = 'none';
+    stopMinigame();
+});
+
+document.getElementById('mgStartBtn').addEventListener('click', startMinigame);
+document.getElementById('mgRestartBtn').addEventListener('click', startMinigame);
+
+function startMinigame() {
+    document.getElementById('mgStartOverlay').style.display = 'none';
+    document.getElementById('mgGameOverOverlay').style.display = 'none';
+    
+    mgIsPlaying = true;
+    mgScore = 0;
+    mgObstacles = [];
+    mgFrameCount = 0;
+    
+    mgSubmarine = {
+        x: 100, y: 250, width: 40, height: 20,
+        velocity: 0, gravity: 0.25, jump: -5
+    };
+    
+    document.getElementById('mgScore').textContent = mgScore;
+    
+    // Start countdown
+    clearInterval(mgGameTimerInterval);
+    mgGameTimerInterval = setInterval(() => {
+        mgTimeLeft--;
+        updateMgTimerDisplay();
+        if(mgTimeLeft <= 0) {
+            endMinigame(true);
+        }
+    }, 1000);
+    
+    // Game Loop
+    cancelAnimationFrame(mgAnimationId);
+    mgGameLoop();
+}
+
+function stopMinigame() {
+    mgIsPlaying = false;
+    clearInterval(mgGameTimerInterval);
+    cancelAnimationFrame(mgAnimationId);
+}
+
+function endMinigame(timeOut = false) {
+    stopMinigame();
+    
+    if (mgScore > (userSettings.mgBestScore || 0)) {
+        userSettings.mgBestScore = mgScore;
+        save('userSettings', userSettings);
+    }
+    
+    const overOverlay = document.getElementById('mgGameOverOverlay');
+    overOverlay.style.display = 'block';
+    overOverlay.querySelector('h2').textContent = timeOut ? "Temps écoulé !" : "Collision !";
+    overOverlay.querySelector('h2').style.color = timeOut ? "#34D399" : "#EF4444";
+    document.getElementById('mgFinalScore').textContent = mgScore;
+    
+    // They can replay immediately ONLY if they have credits left.
+    const restartBtn = document.getElementById('mgRestartBtn');
+    if (userSettings.gameCredits > 0) {
+        restartBtn.style.display = 'inline-block';
+        restartBtn.onclick = () => {
+            userSettings.gameCredits--;
+            save('userSettings', userSettings);
+            renderRewards();
+            mgTimeLeft = 300;
+            startMinigame();
+        };
+    } else {
+        restartBtn.style.display = 'none';
+    }
+}
+
+function updateMgTimerDisplay() {
+    const disp = document.getElementById('mgTimerDisplay');
+    if(!disp) return;
+    const m = Math.floor(mgTimeLeft / 60);
+    const s = mgTimeLeft % 60;
+    disp.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// Input for Game
+document.addEventListener('keydown', (e) => {
+    if(e.code === 'Space' && mgIsPlaying) mgSubmarine.velocity = mgSubmarine.jump;
+});
+if(canvas) {
+    canvas.addEventListener('mousedown', () => {
+        if(mgIsPlaying) mgSubmarine.velocity = mgSubmarine.jump;
+    });
+}
+
+function mgGameLoop() {
+    if(!mgIsPlaying || !ctx) return;
+    
+    // Clear
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw Submarine
+    mgSubmarine.velocity += mgSubmarine.gravity;
+    mgSubmarine.y += mgSubmarine.velocity;
+    
+    ctx.fillStyle = '#FBBF24'; // Yellow submarine
+    ctx.beginPath();
+    ctx.ellipse(mgSubmarine.x + 20, mgSubmarine.y + 10, 20, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Submarine window
+    ctx.fillStyle = '#60A5FA';
+    ctx.beginPath();
+    ctx.arc(mgSubmarine.x + 25, mgSubmarine.y + 8, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Floor/Ceiling collision
+    if(mgSubmarine.y + mgSubmarine.height > canvas.height || mgSubmarine.y < 0) {
+        endMinigame();
+        return;
+    }
+    
+    // Obstacles
+    if(mgFrameCount % 90 === 0) {
+        const gap = 150;
+        const minHeight = 50;
+        const topHeight = Math.floor(Math.random() * (canvas.height - gap - minHeight * 2)) + minHeight;
+        mgObstacles.push({
+            x: canvas.width,
+            topHeight: topHeight,
+            bottomY: topHeight + gap,
+            width: 40,
+            passed: false
+        });
+    }
+    
+    for(let i=0; i<mgObstacles.length; i++) {
+        let obs = mgObstacles[i];
+        obs.x -= 3; // speed
+        
+        ctx.fillStyle = '#334155';
+        // Top pillar
+        ctx.fillRect(obs.x, 0, obs.width, obs.topHeight);
+        // Bottom pillar
+        ctx.fillRect(obs.x, obs.bottomY, obs.width, canvas.height - obs.bottomY);
+        
+        // Mines (red dots on pillars)
+        ctx.fillStyle = '#EF4444';
+        ctx.beginPath(); ctx.arc(obs.x + 20, obs.topHeight, 8, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(obs.x + 20, obs.bottomY, 8, 0, Math.PI*2); ctx.fill();
+        
+        // Collision
+        if (
+            mgSubmarine.x < obs.x + obs.width &&
+            mgSubmarine.x + mgSubmarine.width > obs.x &&
+            (mgSubmarine.y < obs.topHeight || mgSubmarine.y + mgSubmarine.height > obs.bottomY)
+        ) {
+            endMinigame();
+            return;
+        }
+        
+        // Score
+        if(obs.x + obs.width < mgSubmarine.x && !obs.passed) {
+            mgScore++;
+            document.getElementById('mgScore').textContent = mgScore;
+            obs.passed = true;
+        }
+    }
+    
+    // Cleanup obstacles
+    mgObstacles = mgObstacles.filter(o => o.x + o.width > 0);
+    
+    mgFrameCount++;
+    mgAnimationId = requestAnimationFrame(mgGameLoop);
+}
+
 });

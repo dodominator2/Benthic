@@ -1379,8 +1379,18 @@ button {
 
 .timer-display.skin-abyssal {
     color: #10B981;
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
     font-family: var(--font-signature);
+    background-color: #050505;
+    border: 12px solid #000000;
+    border-radius: 50%;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 1.5rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.3), 0 0 20px rgba(0,0,0,0.8);
 }
 
 .timer-display.skin-minimal {
@@ -1554,3 +1564,89 @@ body.has-custom-bg .sidebar {
     height: 250px;
     margin: 0 auto;
 }
+
+/* MINI-GAME (ABYSSAL DIVER) */
+.minigame-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1E1B4B, #312E81);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+    border: 1px solid #4338CA;
+    box-shadow: 0 10px 25px rgba(49, 46, 129, 0.3);
+}
+
+.mg-info h3 { font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #818CF8; }
+.mg-info p { font-size: 0.9rem; color: #C7D2FE; margin-top: 0.25rem; }
+.mg-credits { font-weight: 700; color: #34D399; font-size: 1.1rem; }
+
+.minigame-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 20000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-header {
+    display: flex;
+    justify-content: space-between;
+    width: 800px;
+    max-width: 95vw;
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.mg-timer {
+    color: #F87171;
+    background: #1F2937;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+#gameCanvas {
+    background: #0F172A;
+    border: 4px solid #334155;
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.mg-close-btn {
+    position: absolute;
+    top: 2rem; right: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.mg-close-btn:hover { background: #EF4444; }
+
+.mg-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.8);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    border: 1px solid #334155;
+}
+.mg-overlay h2 { margin-bottom: 1rem; color: #34D399; }
+.mg-overlay p { margin-bottom: 1.5rem; color: #CBD5E1; }
