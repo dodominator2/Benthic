@@ -33,8 +33,8 @@ function performDailyReset() {
         // Reset habits for the new day
         habits.forEach(h => { h.completed = false; });
         
-        // Remove completed tasks (they "disappear" the next day)
-        tasks = tasks.filter(t => !t.completed);
+        // We no longer remove completed tasks here, so they can appear in the history
+        // tasks = tasks.filter(t => !t.completed);
         
         localStorage.setItem('df_lastLoginDate', todayStr);
         saveAll();
@@ -476,8 +476,13 @@ function renderReadingTable() {
 function renderTaskChecklist() {
     const el = document.getElementById('taskChecklist');
     el.innerHTML = '';
-    if(!tasks.length) { el.innerHTML = '<p class="empty-state">Aucune tâche. Utilisez l\'assistant ci-dessus !</p>'; return; }
-    tasks.forEach(t => {
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const visibleTasks = tasks.filter(t => !t.completed || (t.completedAt && t.completedAt.startsWith(todayStr)));
+    
+    if(!visibleTasks.length) { el.innerHTML = '<p class="empty-state">Aucune tâche. Utilisez l\'assistant ci-dessus !</p>'; return; }
+    
+    visibleTasks.forEach(t => {
         const d = document.createElement('div');
         d.className = `task-check-item ${t.completed ? 'completed' : ''}`;
         d.innerHTML = `<div class="checkbox" data-id="${t.id}"></div><span>${t.title}</span><span class="task-subject">${t.subject||'Général'}</span>`;
@@ -489,6 +494,7 @@ function renderTaskChecklist() {
         const t = tasks.find(x => x.id == e.target.dataset.id);
         if(t && !t.completed) {
             t.completed = true;
+            t.completedAt = new Date().toISOString();
             addXP(20);
             saveAll();
             renderTaskChecklist();
@@ -807,6 +813,7 @@ function endPomodoro() {
             
             // Auto complete task
             t.completed = true; 
+            t.completedAt = new Date().toISOString();
             const ev = calendar.getEventById(t.id); 
             if(ev) ev.setProp('backgroundColor','#10B981'); 
             
@@ -891,6 +898,39 @@ function renderCharts() {
     const hsc = document.getElementById('habitStatsContent');
     if(!habits.length){ hsc.innerHTML='<p class="empty-state">Aucune habitude.</p>'; }
     else { hsc.innerHTML=''; habits.forEach(h=>{ const d=document.createElement('div'); d.className='habit-stat-item'; d.innerHTML=`<span class="habit-stat-title">${h.text}</span><span class="habit-stat-count" style="${h.completed?'background:#10B981;color:#fff':''}">${h.completed?'Faite':'En attente'}</span>`; hsc.appendChild(d); }); }
+    
+    // Task History
+    renderTaskHistory();
+}
+
+function renderTaskHistory() {
+    const list = document.getElementById('completedTasksList');
+    if(!list) return;
+    const completed = tasks.filter(t => t.completed).sort((a,b) => {
+        const d1 = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const d2 = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return d2 - d1; // newest first
+    });
+    
+    if(!completed.length) {
+        list.innerHTML = '<p class="empty-state">Aucune tâche terminée récemment.</p>';
+        return;
+    }
+    
+    list.innerHTML = '';
+    completed.forEach(t => {
+        const d = document.createElement('div');
+        d.className = 'history-task-item';
+        const dateStr = t.completedAt ? new Date(t.completedAt).toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short'}) : 'Date inconnue';
+        d.innerHTML = `
+            <div class="history-task-left">
+                <span class="history-task-title">${t.title}</span>
+                <span class="history-task-subject">${t.subject||'Général'}</span>
+            </div>
+            <span class="history-task-date">${dateStr}</span>
+        `;
+        list.appendChild(d);
+    });
 }
 
 document.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', e => {
@@ -1004,23 +1044,64 @@ const REWARDS_CONFIG = {
         { id: 'bg1', name: 'Rayons Abyssaux', level: 3, url: 'backgrounds/bg_level_3.png', color: '#1e293b' },
         { id: 'bg2', name: 'Bioluminescence', level: 5, url: 'backgrounds/bg_level_5.png', color: '#0f172a' },
         { id: 'bg3', name: 'Cité Engloutie', level: 7, url: 'backgrounds/bg_level_7.png', color: '#1e293b' },
-        { id: 'bg4', name: 'Trône de Corail', level: 9, url: 'backgrounds/bg_level_9.png', color: '#0f172a' }
+        { id: 'bg4', name: 'Trône de Corail', level: 9, url: 'backgrounds/bg_level_9.png', color: '#0f172a' },
+        { id: 'bg5', name: 'Fosse des Mariannes', level: 12, url: 'none', color: '#0a0f1c' },
+        { id: 'bg6', name: 'Épave Oubliée', level: 15, url: 'none', color: '#111827' },
+        { id: 'bg7', name: 'Sanctuaire Sous-Marin', level: 18, url: 'none', color: '#0f172a' },
+        { id: 'bg8', name: 'Aurore Boréale', level: 22, url: 'none', color: '#064e3b' },
+        { id: 'bg9', name: 'Forêt de Varech', level: 26, url: 'none', color: '#14532d' },
+        { id: 'bg10', name: 'Océan Infini', level: 30, url: 'none', color: '#1e3a8a' },
+        { id: 'bg11', name: 'Abysse Scintillant', level: 35, url: 'none', color: '#312e81' },
+        { id: 'bg12', name: 'Mégalodon', level: 40, url: 'none', color: '#111827' },
+        { id: 'bg13', name: 'Léviathan', level: 45, url: 'none', color: '#171717' },
+        { id: 'bg14', name: 'L\'Œil de l\'Océan', level: 50, url: 'none', color: '#000000' }
     ],
     pomoSkins: [
         { id: 'default', name: 'Digital (Défaut)', level: 1, class: '', icon: 'ph-timer' },
         { id: 'neon', name: 'Néon Cyan', level: 2, class: 'skin-neon', icon: 'ph-lightning' },
         { id: 'hourglass', name: 'Sablier Abyssal', level: 4, class: 'skin-abyssal', icon: 'ph-hourglass' },
         { id: 'minimal', name: 'Zen Minimal', level: 6, class: 'skin-minimal', icon: 'ph-drop' },
-        { id: 'clock', name: 'Horloge Marine', level: 8, class: 'skin-clock', icon: 'ph-clock' }
+        { id: 'clock', name: 'Horloge Marine', level: 8, class: 'skin-clock', icon: 'ph-clock' },
+        { id: 'radar', name: 'Radar Sous-Marin', level: 11, class: 'skin-radar', icon: 'ph-target' },
+        { id: 'compass', name: 'Boussole Ancienne', level: 14, class: 'skin-compass', icon: 'ph-compass' },
+        { id: 'pearl', name: 'Perle Brillante', level: 17, class: 'skin-pearl', icon: 'ph-circle' },
+        { id: 'mechanic', name: 'Mécanique Antique', level: 20, class: 'skin-mechanic', icon: 'ph-gear' },
+        { id: 'holo', name: 'Hologramme Atlante', level: 25, class: 'skin-holo', icon: 'ph-projector-screen' },
+        { id: 'crystal', name: 'Cristal Temporel', level: 30, class: 'skin-crystal', icon: 'ph-diamond' },
+        { id: 'drop', name: 'Compte-Gouttes Cosmique', level: 40, class: 'skin-drop', icon: 'ph-eyedropper' },
+        { id: 'relic', name: 'Relique Temporelle', level: 50, class: 'skin-relic', icon: 'ph-crown' }
     ],
     titles: [
         { id: 't1', name: 'Plongeur Novice', level: 1 },
         { id: 't2', name: 'Éclaireur des Eaux', level: 5 },
-        { id: 't3', name: 'Maître des Abysses', level: 10 }
+        { id: 't3', name: 'Maître des Abysses', level: 10 },
+        { id: 't4', name: 'Explorateur de la Fosse', level: 15 },
+        { id: 't5', name: 'Gardien des Courants', level: 20 },
+        { id: 't6', name: 'Chasseur de Trésors', level: 25 },
+        { id: 't7', name: 'Empereur des Océans', level: 30 },
+        { id: 't8', name: 'Légende Sous-Marine', level: 40 },
+        { id: 't9', name: 'Poséidon', level: 50 }
+    ],
+    fonts: [
+        { id: 'default', name: 'Outfit (Défaut)', level: 1, value: "'Outfit', sans-serif" },
+        { id: 'mono', name: 'Codeur Abyssal', level: 10, value: "'Roboto Mono', monospace" },
+        { id: 'classic', name: 'Littérature Marine', level: 20, value: "'Playfair Display', serif" },
+        { id: 'future', name: 'Futuriste', level: 30, value: "'Space Grotesk', sans-serif" },
+        { id: 'antique', name: 'Antique', level: 40, value: "'Cinzel', serif" },
+        { id: 'script', name: 'Calligraphie', level: 50, value: "'Dancing Script', cursive" }
+    ],
+    colors: [
+        { id: 'default', name: 'Carbone (Défaut)', level: 1, value: '#171717' },
+        { id: 'emerald', name: 'Vert Émeraude', level: 8, value: '#10b981' },
+        { id: 'violet', name: 'Violet Profond', level: 16, value: '#8b5cf6' },
+        { id: 'gold', name: 'Or Atlante', level: 24, value: '#f59e0b' },
+        { id: 'magma', name: 'Rouge Magma', level: 32, value: '#ef4444' },
+        { id: 'pink', name: 'Rose Bioluminescent', level: 42, value: '#ec4899' },
+        { id: 'black', name: 'Noir Abyssal', level: 50, value: '#000000' }
     ]
 };
 
-let userSettings = load('userSettings', { wallpaper: 'default', pomoSkin: 'default' });
+let userSettings = load('userSettings', { wallpaper: 'default', pomoSkin: 'default', font: 'default', color: 'default' });
 
 function applyUserSettings() {
     // Apply wallpaper
@@ -1047,6 +1128,18 @@ function applyUserSettings() {
     const timerDisplay = document.getElementById('timerDisplay');
     if (skin && timerDisplay) {
         timerDisplay.className = 'timer-display ' + skin.class;
+    }
+
+    // Apply Font
+    const font = REWARDS_CONFIG.fonts.find(f => f.id === (userSettings.font || 'default'));
+    if (font) {
+        document.documentElement.style.setProperty('--font-family', font.value);
+    }
+    
+    // Apply Color
+    const color = REWARDS_CONFIG.colors.find(c => c.id === (userSettings.color || 'default'));
+    if (color) {
+        document.documentElement.style.setProperty('--accent-primary', color.value);
     }
 }
 
@@ -1082,35 +1175,101 @@ function renderRewards() {
         wpContainer.appendChild(card);
     });
 
-    // Pomo Skins
-    const skinContainer = document.getElementById('rewards-pomo-skins');
-    skinContainer.innerHTML = '';
-    REWARDS_CONFIG.pomoSkins.forEach(skin => {
-        const isLocked = level < skin.level;
-        const isActive = userSettings.pomoSkin === skin.id;
-        const card = document.createElement('div');
-        card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
-        card.innerHTML = `
-            ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
-            <div class="reward-preview">
-                <i class="ph ${skin.icon}" style="font-size: 3rem; color: ${isLocked ? '#9ca3af' : 'var(--accent-primary)'}"></i>
-                ${isLocked ? '<i class="ph ph-lock" style="position:absolute; font-size: 1.2rem; bottom: 10px; right: 10px;"></i>' : ''}
-            </div>
-            <div class="reward-info">
-                <h4>${skin.name}</h4>
-                <p>${isLocked ? `Débloqué au Niv. ${skin.level}` : 'Débloqué'}</p>
-            </div>
-        `;
-        if (!isLocked) {
-            card.onclick = () => {
-                userSettings.pomoSkin = skin.id;
-                save('userSettings', userSettings);
-                applyUserSettings();
-                renderRewards();
-            };
-        }
-        skinContainer.appendChild(card);
-    });
+    // Fonts
+    const fontContainer = document.getElementById('rewards-fonts');
+    if (fontContainer) {
+        fontContainer.innerHTML = '';
+        REWARDS_CONFIG.fonts.forEach(font => {
+            const isLocked = level < font.level;
+            const isActive = userSettings.font === font.id || (!userSettings.font && font.id === 'default');
+            const card = document.createElement('div');
+            card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
+            card.innerHTML = `
+                ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
+                <div class="reward-preview" style="background: var(--panel-bg);">
+                    <span style="font-family: ${font.value}; font-size: 2rem; color: var(--text-main);">Aa</span>
+                    ${isLocked ? '<i class="ph ph-lock" style="position:absolute; font-size: 1.2rem; bottom: 10px; right: 10px;"></i>' : ''}
+                </div>
+                <div class="reward-info">
+                    <h4>${font.name}</h4>
+                    <p>${isLocked ? `Débloqué au Niv. ${font.level}` : 'Débloqué'}</p>
+                </div>
+            `;
+            if (!isLocked) {
+                card.onclick = () => {
+                    userSettings.font = font.id;
+                    save('userSettings', userSettings);
+                    applyUserSettings();
+                    renderRewards();
+                };
+            }
+            fontContainer.appendChild(card);
+        });
+    }
+
+    // Colors
+    const colorContainer = document.getElementById('rewards-colors');
+    if (colorContainer) {
+        colorContainer.innerHTML = '';
+        REWARDS_CONFIG.colors.forEach(color => {
+            const isLocked = level < color.level;
+            const isActive = userSettings.color === color.id || (!userSettings.color && color.id === 'default');
+            const card = document.createElement('div');
+            card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
+            card.innerHTML = `
+                ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
+                <div class="reward-preview" style="background: var(--panel-bg); display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background-color: ${color.value};"></div>
+                    ${isLocked ? '<i class="ph ph-lock" style="position:absolute; font-size: 1.2rem; bottom: 10px; right: 10px;"></i>' : ''}
+                </div>
+                <div class="reward-info">
+                    <h4>${color.name}</h4>
+                    <p>${isLocked ? `Débloqué au Niv. ${color.level}` : 'Débloqué'}</p>
+                </div>
+            `;
+            if (!isLocked) {
+                card.onclick = () => {
+                    userSettings.color = color.id;
+                    save('userSettings', userSettings);
+                    applyUserSettings();
+                    renderRewards();
+                };
+            }
+            colorContainer.appendChild(card);
+        });
+    }
+    
+    // Titles
+    const titlesContainer = document.getElementById('rewards-titles');
+    if (titlesContainer) {
+        titlesContainer.innerHTML = '';
+        REWARDS_CONFIG.titles.forEach(title => {
+            const isLocked = level < title.level;
+            const isActive = userSettings.title === title.id;
+            const card = document.createElement('div');
+            card.className = `reward-card ${isLocked ? 'locked' : ''} ${isActive ? 'active-reward' : ''}`;
+            card.innerHTML = `
+                ${isActive ? '<span class="reward-badge-active">Actif</span>' : ''}
+                <div class="reward-preview" style="background: var(--panel-bg); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-weight: 600; font-size: 1.1rem; color: var(--accent-primary);">${title.name}</span>
+                    ${isLocked ? '<i class="ph ph-lock" style="position:absolute; font-size: 1.2rem; bottom: 10px; right: 10px;"></i>' : ''}
+                </div>
+                <div class="reward-info">
+                    <h4>${title.name}</h4>
+                    <p>${isLocked ? `Débloqué au Niv. ${title.level}` : 'Débloqué'}</p>
+                </div>
+            `;
+            if (!isLocked) {
+                card.onclick = () => {
+                    userSettings.title = title.id;
+                    save('userSettings', userSettings);
+                    applyUserSettings();
+                    renderRewards();
+                };
+            }
+            titlesContainer.appendChild(card);
+        });
+    }
 
     // Progression / Prochainement
     renderFutureRewards(level);
@@ -1123,6 +1282,8 @@ function renderFutureRewards(currentLevel) {
     // Trouver la prochaine récompense de chaque type
     const nextWp = REWARDS_CONFIG.wallpapers.find(w => w.level > currentLevel);
     const nextSkin = REWARDS_CONFIG.pomoSkins.find(s => s.level > currentLevel);
+    const nextFont = REWARDS_CONFIG.fonts.find(f => f.level > currentLevel);
+    const nextColor = REWARDS_CONFIG.colors.find(c => c.level > currentLevel);
     
     let html = '<h3>Prochaines étapes de votre voyage</h3><div class="future-rewards-row">';
     if (nextWp) {
@@ -1130,6 +1291,12 @@ function renderFutureRewards(currentLevel) {
     }
     if (nextSkin) {
         html += `<div class="future-item"><i class="ph ph-timer"></i> <span>Niveau ${nextSkin.level} : Horloge ${nextSkin.name}</span></div>`;
+    }
+    if (nextFont) {
+        html += `<div class="future-item"><i class="ph ph-text-t"></i> <span>Niveau ${nextFont.level} : Police ${nextFont.name}</span></div>`;
+    }
+    if (nextColor) {
+        html += `<div class="future-item"><i class="ph ph-palette"></i> <span>Niveau ${nextColor.level} : Couleur ${nextColor.name}</span></div>`;
     }
     html += '</div>';
     futureContainer.innerHTML = html;
@@ -1144,6 +1311,8 @@ document.querySelectorAll('.reward-tab').forEach(btn => {
         document.getElementById('rewards-wallpapers').style.display = tab === 'wallpapers' ? 'grid' : 'none';
         document.getElementById('rewards-pomo-skins').style.display = tab === 'pomo-skins' ? 'grid' : 'none';
         document.getElementById('rewards-titles').style.display = tab === 'titles' ? 'grid' : 'none';
+        const fTab = document.getElementById('rewards-fonts'); if(fTab) fTab.style.display = tab === 'fonts' ? 'grid' : 'none';
+        const cTab = document.getElementById('rewards-colors'); if(cTab) cTab.style.display = tab === 'colors' ? 'grid' : 'none';
     });
 });
 
